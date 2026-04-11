@@ -20,6 +20,7 @@ ORDER BY id
 LIMIT $2
 OFFSET $3;
 
--- name: DeleteEntry :exec
+-- name: DeleteEntry :one
 DELETE FROM entries
-WHERE id = $1;
+WHERE id = $1
+RETURNING *;

@@ -56,7 +56,7 @@ func TestDeleteEntry(t *testing.T) {
 	account := createRandomAccount(t)
 	createdEntry := createRandomEntry(t, account.ID)
 
-	err := testQueries.DeleteEntry(context.Background(), createdEntry.ID)
+	_, err := testQueries.DeleteEntry(context.Background(), createdEntry.ID)
 	require.NoError(t, err)
 
 	_, err = testQueries.GetEntry(context.Background(), createdEntry.ID)

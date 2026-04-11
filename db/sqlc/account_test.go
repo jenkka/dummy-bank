@@ -66,7 +66,7 @@ func TestUpdateAccount(t *testing.T) {
 		ID:      createdAccount.ID,
 		Balance: "15.11",
 	}
-	err = testQueries.UpdateAccount(context.Background(), updateAccParams)
+	_, err = testQueries.UpdateAccount(context.Background(), updateAccParams)
 	require.NoError(t, err)
 
 	updatedAccount, err := testQueries.GetAccount(context.Background(), createdAccount.ID)
@@ -82,7 +82,7 @@ func TestDeleteAccount(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, createdAccount)
 
-	err = testQueries.DeleteAccount(context.Background(), createdAccount.ID)
+	_, err = testQueries.DeleteAccount(context.Background(), createdAccount.ID)
 	require.NoError(t, err)
 
 	_, err = testQueries.GetAccount(context.Background(), createdAccount.ID)

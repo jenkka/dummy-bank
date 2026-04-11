@@ -62,7 +62,7 @@ func TestDeleteTransfer(t *testing.T) {
 	toAccount := createRandomAccount(t)
 	createdTransfer := createRandomTransfer(t, fromAccount.ID, toAccount.ID)
 
-	err := testQueries.DeleteTransfer(context.Background(), createdTransfer.ID)
+	_, err := testQueries.DeleteTransfer(context.Background(), createdTransfer.ID)
 	require.NoError(t, err)
 
 	_, err = testQueries.GetTransfer(context.Background(), createdTransfer.ID)

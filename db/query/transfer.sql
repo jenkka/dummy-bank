@@ -23,6 +23,7 @@ ORDER BY id
 LIMIT $3
 OFFSET $4;
 
--- name: DeleteTransfer :exec
+-- name: DeleteTransfer :one
 DELETE FROM transfers
-WHERE id = $1;
+WHERE id = $1
+RETURNING *;

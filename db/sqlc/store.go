@@ -50,7 +50,7 @@ func (store *Store) TransferTxn(ctx context.Context, params CreateTransferParams
 	var txnRes TransferTxnRes
 	var err error
 
-	store.execTxn(ctx, func(queries *Queries) error {
+	err = store.execTxn(ctx, func(queries *Queries) error {
 		txnRes.Transfer, err = queries.CreateTransfer(ctx, params)
 		if err != nil {
 			return err
@@ -74,16 +74,29 @@ func (store *Store) TransferTxn(ctx context.Context, params CreateTransferParams
 			return err
 		}
 
-		// TODO: Update accounts' balance
-		// txnRes.FromAccount, err = queries.GetAccount(ctx, params.FromAccountID)
-		// if err != nil {
-		// 	return err
-		// }
-		//
-		// txnRes.ToAccount, err = queries.GetAccount(ctx, params.ToAccountID)
-		// if err != nil {
-		// 	return err
-		// }
+		txnRes.FromAccount, err = queries.AddAccountBalance(
+			ctx,
+			AddAccountBalanceParams{
+				ID:     params.FromAccountID,
+				Amount: fmt.Sprintf("-%v", params.Amount),
+			},
+		)
+
+		if err != nil {
+			return err
+		}
+
+		txnRes.ToAccount, err = queries.AddAccountBalance(
+			ctx,
+			AddAccountBalanceParams{
+				ID:     params.ToAccountID,
+				Amount: params.Amount,
+			},
+		)
+
+		if err != nil {
+			return err
+		}
 
 		return nil
 	})
