@@ -7,13 +7,14 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 )
 
 func randomAccountParams() CreateAccountParams {
 	return CreateAccountParams{
 		Owner:    fmt.Sprintf("user_%d", rand.Int()),
-		Balance:  fmt.Sprintf("%d", rand.Intn(1000)),
+		Balance:  decimal.NewFromInt(int64(rand.Intn(1000))),
 		Currency: "MXN",
 	}
 }
@@ -36,7 +37,7 @@ func TestCreateAccount(t *testing.T) {
 	require.NotZero(t, account.ID)
 	require.NotZero(t, account.CreatedAt)
 	require.Equal(t, accParams.Owner, account.Owner)
-	require.Equal(t, accParams.Balance, account.Balance)
+	requireDecimalEqual(t, accParams.Balance, account.Balance)
 	require.Equal(t, accParams.Currency, account.Currency)
 }
 
@@ -52,7 +53,7 @@ func TestGetAccount(t *testing.T) {
 	require.NotZero(t, account.ID)
 	require.NotZero(t, account.CreatedAt)
 	require.Equal(t, accParams.Owner, account.Owner)
-	require.Equal(t, accParams.Balance, account.Balance)
+	requireDecimalEqual(t, accParams.Balance, account.Balance)
 	require.Equal(t, accParams.Currency, account.Currency)
 }
 
@@ -64,7 +65,7 @@ func TestUpdateAccount(t *testing.T) {
 
 	updateAccParams := UpdateAccountParams{
 		ID:      createdAccount.ID,
-		Balance: "15.11",
+		Balance: decimal.NewFromFloat(15.11),
 	}
 	_, err = testQueries.UpdateAccount(context.Background(), updateAccParams)
 	require.NoError(t, err)
@@ -72,7 +73,7 @@ func TestUpdateAccount(t *testing.T) {
 	updatedAccount, err := testQueries.GetAccount(context.Background(), createdAccount.ID)
 	require.NoError(t, err)
 	require.NotEmpty(t, updatedAccount)
-	require.Equal(t, updateAccParams.Balance, updatedAccount.Balance)
+	requireDecimalEqual(t, updateAccParams.Balance, updatedAccount.Balance)
 }
 
 func TestDeleteAccount(t *testing.T) {

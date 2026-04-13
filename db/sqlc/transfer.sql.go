@@ -7,6 +7,8 @@ package db
 
 import (
 	"context"
+
+	"github.com/shopspring/decimal"
 )
 
 const createTransfer = `-- name: CreateTransfer :one
@@ -20,9 +22,9 @@ INSERT INTO transfers (
 `
 
 type CreateTransferParams struct {
-	FromAccountID int64  `json:"from_account_id"`
-	ToAccountID   int64  `json:"to_account_id"`
-	Amount        string `json:"amount"`
+	FromAccountID int64           `json:"from_account_id"`
+	ToAccountID   int64           `json:"to_account_id"`
+	Amount        decimal.Decimal `json:"amount"`
 }
 
 func (q *Queries) CreateTransfer(ctx context.Context, arg CreateTransferParams) (Transfer, error) {

@@ -3,10 +3,10 @@ package db
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"math/rand"
 	"testing"
 
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,7 +14,7 @@ func randomTransferParams(fromAccountID, toAccountID int64) CreateTransferParams
 	return CreateTransferParams{
 		FromAccountID: fromAccountID,
 		ToAccountID:   toAccountID,
-		Amount:        fmt.Sprintf("%d", rand.Intn(1000)),
+		Amount:        decimal.NewFromInt(int64(rand.Intn(1000))),
 	}
 }
 
@@ -39,7 +39,7 @@ func TestCreateTransfer(t *testing.T) {
 	require.NotZero(t, transfer.CreatedAt)
 	require.Equal(t, transferParams.FromAccountID, transfer.FromAccountID)
 	require.Equal(t, transferParams.ToAccountID, transfer.ToAccountID)
-	require.Equal(t, transferParams.Amount, transfer.Amount)
+	requireDecimalEqual(t, transferParams.Amount, transfer.Amount)
 }
 
 func TestGetTransfer(t *testing.T) {
@@ -53,7 +53,7 @@ func TestGetTransfer(t *testing.T) {
 	require.Equal(t, createdTransfer.ID, transfer.ID)
 	require.Equal(t, createdTransfer.FromAccountID, transfer.FromAccountID)
 	require.Equal(t, createdTransfer.ToAccountID, transfer.ToAccountID)
-	require.Equal(t, createdTransfer.Amount, transfer.Amount)
+	requireDecimalEqual(t, createdTransfer.Amount, transfer.Amount)
 	require.Equal(t, createdTransfer.CreatedAt, transfer.CreatedAt)
 }
 

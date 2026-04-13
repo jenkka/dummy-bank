@@ -3,7 +3,10 @@ package db
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+
+	"github.com/shopspring/decimal"
 )
 
 type Store struct {
@@ -50,6 +53,10 @@ func (store *Store) TransferTxn(ctx context.Context, params CreateTransferParams
 	var txnRes TransferTxnRes
 	var err error
 
+	if params.Amount.LessThanOrEqual(decimal.NewFromInt(0)) {
+		return txnRes, errors.New("Transfer amount must be bigger than 0")
+	}
+
 	err = store.execTxn(ctx, func(queries *Queries) error {
 		txnRes.Transfer, err = queries.CreateTransfer(ctx, params)
 		if err != nil {
@@ -58,7 +65,7 @@ func (store *Store) TransferTxn(ctx context.Context, params CreateTransferParams
 
 		fromEntryParams := CreateEntryParams{
 			AccountID: params.FromAccountID,
-			Amount:    fmt.Sprintf("-%s", params.Amount),
+			Amount:    params.Amount.Neg(),
 		}
 		txnRes.FromEntry, err = queries.CreateEntry(ctx, fromEntryParams)
 		if err != nil {
@@ -74,28 +81,56 @@ func (store *Store) TransferTxn(ctx context.Context, params CreateTransferParams
 			return err
 		}
 
-		txnRes.FromAccount, err = queries.AddAccountBalance(
-			ctx,
-			AddAccountBalanceParams{
-				ID:     params.FromAccountID,
-				Amount: fmt.Sprintf("-%v", params.Amount),
-			},
-		)
+		// Update the balance of the two accounts in order (smallest ID first)
+		// to avoid a DB deadlock
+		if params.FromAccountID < params.ToAccountID {
+			txnRes.FromAccount, err = queries.AddAccountBalance(
+				ctx,
+				AddAccountBalanceParams{
+					ID:     params.FromAccountID,
+					Amount: params.Amount.Neg(),
+				},
+			)
 
-		if err != nil {
-			return err
-		}
+			if err != nil {
+				return err
+			}
 
-		txnRes.ToAccount, err = queries.AddAccountBalance(
-			ctx,
-			AddAccountBalanceParams{
-				ID:     params.ToAccountID,
-				Amount: params.Amount,
-			},
-		)
+			txnRes.ToAccount, err = queries.AddAccountBalance(
+				ctx,
+				AddAccountBalanceParams{
+					ID:     params.ToAccountID,
+					Amount: params.Amount,
+				},
+			)
 
-		if err != nil {
-			return err
+			if err != nil {
+				return err
+			}
+		} else {
+			txnRes.ToAccount, err = queries.AddAccountBalance(
+				ctx,
+				AddAccountBalanceParams{
+					ID:     params.ToAccountID,
+					Amount: params.Amount,
+				},
+			)
+
+			if err != nil {
+				return err
+			}
+
+			txnRes.FromAccount, err = queries.AddAccountBalance(
+				ctx,
+				AddAccountBalanceParams{
+					ID:     params.FromAccountID,
+					Amount: params.Amount.Neg(),
+				},
+			)
+
+			if err != nil {
+				return err
+			}
 		}
 
 		return nil

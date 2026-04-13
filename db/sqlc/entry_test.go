@@ -3,17 +3,17 @@ package db
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"math/rand"
 	"testing"
 
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 )
 
 func randomEntryParams(accountID int64) CreateEntryParams {
 	return CreateEntryParams{
 		AccountID: accountID,
-		Amount:    fmt.Sprintf("%d", rand.Intn(1000)),
+		Amount:    decimal.NewFromInt(int64(rand.Intn(1000))),
 	}
 }
 
@@ -36,7 +36,7 @@ func TestCreateEntry(t *testing.T) {
 	require.NotZero(t, entry.ID)
 	require.NotZero(t, entry.CreatedAt)
 	require.Equal(t, entryParams.AccountID, entry.AccountID)
-	require.Equal(t, entryParams.Amount, entry.Amount)
+	requireDecimalEqual(t, entryParams.Amount, entry.Amount)
 }
 
 func TestGetEntry(t *testing.T) {
@@ -48,7 +48,7 @@ func TestGetEntry(t *testing.T) {
 	require.NotEmpty(t, entry)
 	require.Equal(t, createdEntry.ID, entry.ID)
 	require.Equal(t, createdEntry.AccountID, entry.AccountID)
-	require.Equal(t, createdEntry.Amount, entry.Amount)
+	requireDecimalEqual(t, createdEntry.Amount, entry.Amount)
 	require.Equal(t, createdEntry.CreatedAt, entry.CreatedAt)
 }
 

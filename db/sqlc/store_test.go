@@ -2,10 +2,9 @@ package db
 
 import (
 	"context"
-	"fmt"
-	"strconv"
 	"testing"
 
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,19 +13,14 @@ func TestTransferTxn(t *testing.T) {
 	ogFromAccount := createRandomAccount(t)
 	ogToAccount := createRandomAccount(t)
 
-	ogFromAccountBalance, err := strconv.ParseFloat(ogFromAccount.Balance, 64)
-	require.NoError(t, err)
-
-	ogToAccountBalance, err := strconv.ParseFloat(ogToAccount.Balance, 64)
-	require.NoError(t, err)
-
 	nTransfers := 5
-	transferAmount := 10.0
+	transferAmount := decimal.NewFromFloat(10.0)
 	transferParams := CreateTransferParams{
 		FromAccountID: ogFromAccount.ID,
 		ToAccountID:   ogToAccount.ID,
-		Amount:        fmt.Sprintf("%v", transferAmount),
+		Amount:        transferAmount,
 	}
+
 	errors := make(chan error)
 	results := make(chan TransferTxnRes)
 
@@ -46,17 +40,17 @@ func TestTransferTxn(t *testing.T) {
 		resTransfer := res.Transfer
 		require.NotEmpty(t, resTransfer.ID)
 		require.NotEmpty(t, resTransfer.CreatedAt)
-		require.Equal(t, transferParams.Amount, resTransfer.Amount)
+		requireDecimalEqual(t, transferParams.Amount, resTransfer.Amount)
 		require.Equal(t, transferParams.FromAccountID, resTransfer.FromAccountID)
 		require.Equal(t, transferParams.ToAccountID, resTransfer.ToAccountID)
 
-		_, err = testQueries.GetTransfer(context.Background(), resTransfer.ID)
+		_, err := testQueries.GetTransfer(context.Background(), resTransfer.ID)
 		require.NoError(t, err)
 
 		resFromEntry := res.FromEntry
 		require.NotEmpty(t, resFromEntry.ID)
 		require.NotEmpty(t, resFromEntry.CreatedAt)
-		require.Equal(t, fmt.Sprintf("-%s", transferParams.Amount), resFromEntry.Amount)
+		requireDecimalEqual(t, transferParams.Amount.Neg(), resFromEntry.Amount)
 		require.Equal(t, transferParams.FromAccountID, resFromEntry.AccountID)
 
 		_, err = testQueries.GetEntry(context.Background(), resFromEntry.ID)
@@ -65,7 +59,7 @@ func TestTransferTxn(t *testing.T) {
 		resToEntry := res.ToEntry
 		require.NotEmpty(t, resToEntry.ID)
 		require.NotEmpty(t, resToEntry.CreatedAt)
-		require.Equal(t, transferParams.Amount, resToEntry.Amount)
+		requireDecimalEqual(t, transferParams.Amount, resToEntry.Amount)
 		require.Equal(t, transferParams.ToAccountID, resToEntry.AccountID)
 
 		_, err = testQueries.GetEntry(context.Background(), resToEntry.ID)
@@ -75,20 +69,14 @@ func TestTransferTxn(t *testing.T) {
 		require.NotEmpty(t, resFromAccount)
 		require.Equal(t, ogFromAccount.ID, resFromAccount.ID)
 
-		resFromAccountBalance, err := strconv.ParseFloat(resFromAccount.Balance, 64)
-		require.NoError(t, err)
-
 		resToAccount := res.ToAccount
 		require.NotEmpty(t, resToAccount)
 		require.Equal(t, ogToAccount.ID, resToAccount.ID)
 
-		resToAccountBalance, err := strconv.ParseFloat(resToAccount.Balance, 64)
-		require.NoError(t, err)
-
-		fromAccountDiff := ogFromAccountBalance - resFromAccountBalance
-		toAccountDiff := resToAccountBalance - ogToAccountBalance
-		require.Equal(t, fromAccountDiff, toAccountDiff)
-		require.True(t, fromAccountDiff > 0)
+		fromAccountDiff := ogFromAccount.Balance.Sub(resFromAccount.Balance)
+		toAccountDiff := resToAccount.Balance.Sub(ogToAccount.Balance)
+		requireDecimalEqual(t, fromAccountDiff, toAccountDiff)
+		require.True(t, fromAccountDiff.GreaterThan(decimal.NewFromInt(0)))
 	}
 
 	updatedFromAccount, err := testQueries.GetAccount(context.Background(), ogFromAccount.ID)
@@ -99,9 +87,55 @@ func TestTransferTxn(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, updatedToAccount)
 
-	expectedFromAccountBalance := fmt.Sprintf("%v", ogFromAccountBalance-transferAmount*float64(nTransfers))
-	require.Equal(t, expectedFromAccountBalance, updatedFromAccount.Balance)
+	expectedFromAccountBalance := ogFromAccount.Balance.Sub(transferAmount.Mul(decimal.NewFromInt(int64(nTransfers))))
+	requireDecimalEqual(t, expectedFromAccountBalance, updatedFromAccount.Balance)
 
-	expectedToAccountBalance := fmt.Sprintf("%v", ogToAccountBalance+transferAmount*float64(nTransfers))
-	require.Equal(t, expectedToAccountBalance, updatedToAccount.Balance)
+	expectedToAccountBalance := ogToAccount.Balance.Add(transferAmount.Mul(decimal.NewFromInt(int64(nTransfers))))
+	requireDecimalEqual(t, expectedToAccountBalance, updatedToAccount.Balance)
+}
+
+func TestTransferTxnDeadlock(t *testing.T) {
+	store := NewStore(testDB)
+	account1 := createRandomAccount(t)
+	account2 := createRandomAccount(t)
+
+	nTransfers := 10
+	transferAmount := decimal.NewFromFloat(10.0)
+
+	errors := make(chan error)
+
+	for i := 0; i < nTransfers; i++ {
+		fromAccountID := account1.ID
+		toAccountID := account2.ID
+
+		if i%2 != 0 {
+			fromAccountID = account2.ID
+			toAccountID = account1.ID
+		}
+
+		go func() {
+			transferParams := CreateTransferParams{
+				FromAccountID: fromAccountID,
+				ToAccountID:   toAccountID,
+				Amount:        transferAmount,
+			}
+			_, err := store.TransferTxn(context.Background(), transferParams)
+			errors <- err
+		}()
+	}
+
+	for i := 0; i < nTransfers; i++ {
+		require.NoError(t, <-errors)
+	}
+
+	updatedAccount1, err := testQueries.GetAccount(context.Background(), account1.ID)
+	require.NoError(t, err)
+	require.NotEmpty(t, updatedAccount1)
+
+	updatedAccount2, err := testQueries.GetAccount(context.Background(), account2.ID)
+	require.NoError(t, err)
+	require.NotEmpty(t, updatedAccount2)
+
+	requireDecimalEqual(t, account1.Balance, updatedAccount1.Balance)
+	requireDecimalEqual(t, account2.Balance, updatedAccount2.Balance)
 }

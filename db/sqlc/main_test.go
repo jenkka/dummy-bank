@@ -7,7 +7,14 @@ import (
 	"testing"
 
 	_ "github.com/lib/pq"
+	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/require"
 )
+
+func requireDecimalEqual(t *testing.T, expected, actual decimal.Decimal) {
+	t.Helper()
+	require.True(t, expected.Equal(actual), "expected %s, got %s", expected, actual)
+}
 
 const (
 	dbDriver = "postgres"
