@@ -9,19 +9,24 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-type Store struct {
+type Store interface {
+	Querier
+	TransferTxn(ctx context.Context, params CreateTransferParams) (TransferTxnRes, error)
+}
+
+type SQLStore struct {
 	*Queries
 	db *sql.DB
 }
 
-func NewStore(db *sql.DB) *Store {
-	return &Store{
+func NewStore(db *sql.DB) Store {
+	return &SQLStore{
 		Queries: New(db),
 		db:      db,
 	}
 }
 
-func (store *Store) execTxn(ctx context.Context, fn func(*Queries) error) error {
+func (store *SQLStore) execTxn(ctx context.Context, fn func(*Queries) error) error {
 	txn, err := store.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -49,7 +54,7 @@ type TransferTxnRes struct {
 	ToEntry     Entry    `json:"to_entry"`
 }
 
-func (store *Store) TransferTxn(ctx context.Context, params CreateTransferParams) (TransferTxnRes, error) {
+func (store *SQLStore) TransferTxn(ctx context.Context, params CreateTransferParams) (TransferTxnRes, error) {
 	var txnRes TransferTxnRes
 	var err error
 
