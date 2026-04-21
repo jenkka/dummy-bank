@@ -79,19 +79,26 @@ func TestTransferTxn(t *testing.T) {
 		require.True(t, fromAccountDiff.GreaterThan(decimal.NewFromInt(0)))
 	}
 
-	updatedFromAccount, err := testQueries.GetAccount(context.Background(), ogFromAccount.ID)
+	updatedFromAccount, err := testQueries.GetAccount(
+		context.Background(), ogFromAccount.ID,
+	)
 	require.NoError(t, err)
 	require.NotEmpty(t, updatedFromAccount)
 
-	updatedToAccount, err := testQueries.GetAccount(context.Background(), ogToAccount.ID)
+	updatedToAccount, err := testQueries.GetAccount(
+		context.Background(), ogToAccount.ID,
+	)
 	require.NoError(t, err)
 	require.NotEmpty(t, updatedToAccount)
 
-	expectedFromAccountBalance := ogFromAccount.Balance.Sub(transferAmount.Mul(decimal.NewFromInt(int64(nTransfers))))
-	requireDecimalEqual(t, expectedFromAccountBalance, updatedFromAccount.Balance)
+	totalTransferred := transferAmount.Mul(
+		decimal.NewFromInt(int64(nTransfers)),
+	)
+	expectedFromBalance := ogFromAccount.Balance.Sub(totalTransferred)
+	requireDecimalEqual(t, expectedFromBalance, updatedFromAccount.Balance)
 
-	expectedToAccountBalance := ogToAccount.Balance.Add(transferAmount.Mul(decimal.NewFromInt(int64(nTransfers))))
-	requireDecimalEqual(t, expectedToAccountBalance, updatedToAccount.Balance)
+	expectedToBalance := ogToAccount.Balance.Add(totalTransferred)
+	requireDecimalEqual(t, expectedToBalance, updatedToAccount.Balance)
 }
 
 func TestTransferTxnDeadlock(t *testing.T) {
@@ -128,11 +135,15 @@ func TestTransferTxnDeadlock(t *testing.T) {
 		require.NoError(t, <-errors)
 	}
 
-	updatedAccount1, err := testQueries.GetAccount(context.Background(), account1.ID)
+	updatedAccount1, err := testQueries.GetAccount(
+		context.Background(), account1.ID,
+	)
 	require.NoError(t, err)
 	require.NotEmpty(t, updatedAccount1)
 
-	updatedAccount2, err := testQueries.GetAccount(context.Background(), account2.ID)
+	updatedAccount2, err := testQueries.GetAccount(
+		context.Background(), account2.ID,
+	)
 	require.NoError(t, err)
 	require.NotEmpty(t, updatedAccount2)
 

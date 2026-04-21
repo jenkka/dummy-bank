@@ -10,7 +10,11 @@ import (
 func TestLoadConfig(t *testing.T) {
 	// Create a temporary config file
 	tmpDir := t.TempDir()
-	content := []byte("DB_DRIVER=postgres\nDB_SOURCE=postgres://test\nSERVER_ADDRESS=0.0.0.0:8080\n")
+	content := []byte(
+		"DB_DRIVER=postgres\n" +
+			"DB_SOURCE=postgres://test\n" +
+			"SERVER_ADDRESS=0.0.0.0:8080\n",
+	)
 	err := os.WriteFile(tmpDir+"/app.env", content, 0644)
 	require.NoError(t, err)
 

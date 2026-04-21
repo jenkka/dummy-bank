@@ -10,7 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func randomTransferParams(fromAccountID, toAccountID int64) CreateTransferParams {
+func randomTransferParams(
+	fromAccountID, toAccountID int64,
+) CreateTransferParams {
 	return CreateTransferParams{
 		FromAccountID: fromAccountID,
 		ToAccountID:   toAccountID,
@@ -18,9 +20,13 @@ func randomTransferParams(fromAccountID, toAccountID int64) CreateTransferParams
 	}
 }
 
-func createRandomTransfer(t *testing.T, fromAccountID, toAccountID int64) Transfer {
+func createRandomTransfer(
+	t *testing.T, fromAccountID, toAccountID int64,
+) Transfer {
 	transferParams := randomTransferParams(fromAccountID, toAccountID)
-	transfer, err := testQueries.CreateTransfer(context.Background(), transferParams)
+	transfer, err := testQueries.CreateTransfer(
+		context.Background(), transferParams,
+	)
 	require.NoError(t, err)
 	require.NotEmpty(t, transfer)
 
@@ -31,7 +37,9 @@ func TestCreateTransfer(t *testing.T) {
 	fromAccount := createRandomAccount(t)
 	toAccount := createRandomAccount(t)
 	transferParams := randomTransferParams(fromAccount.ID, toAccount.ID)
-	transfer, err := testQueries.CreateTransfer(context.Background(), transferParams)
+	transfer, err := testQueries.CreateTransfer(
+		context.Background(), transferParams,
+	)
 
 	require.NoError(t, err)
 	require.NotEmpty(t, transfer)
@@ -47,7 +55,9 @@ func TestGetTransfer(t *testing.T) {
 	toAccount := createRandomAccount(t)
 	createdTransfer := createRandomTransfer(t, fromAccount.ID, toAccount.ID)
 
-	transfer, err := testQueries.GetTransfer(context.Background(), createdTransfer.ID)
+	transfer, err := testQueries.GetTransfer(
+		context.Background(), createdTransfer.ID,
+	)
 	require.NoError(t, err)
 	require.NotEmpty(t, transfer)
 	require.Equal(t, createdTransfer.ID, transfer.ID)

@@ -46,14 +46,18 @@ func TestCreateAccount(t *testing.T) {
 func TestGetAccount(t *testing.T) {
 	createdAccount := createRandomAccount(t)
 
-	getAccount, err := testQueries.GetAccount(context.Background(), createdAccount.ID)
+	getAccount, err := testQueries.GetAccount(
+		context.Background(), createdAccount.ID,
+	)
 	require.NoError(t, err)
 	require.NotEmpty(t, getAccount)
 	require.NotZero(t, getAccount.ID)
 	require.Equal(t, createdAccount.Owner, getAccount.Owner)
 	requireDecimalEqual(t, createdAccount.Balance, getAccount.Balance)
 	require.Equal(t, createdAccount.Currency, getAccount.Currency)
-	require.WithinDuration(t, createdAccount.CreatedAt, getAccount.CreatedAt, time.Second)
+	require.WithinDuration(
+		t, createdAccount.CreatedAt, getAccount.CreatedAt, time.Second,
+	)
 }
 
 func TestUpdateAccount(t *testing.T) {
@@ -66,7 +70,9 @@ func TestUpdateAccount(t *testing.T) {
 	_, err := testQueries.UpdateAccount(context.Background(), updateAccParams)
 	require.NoError(t, err)
 
-	updatedAccount, err := testQueries.GetAccount(context.Background(), createdAccount.ID)
+	updatedAccount, err := testQueries.GetAccount(
+		context.Background(), createdAccount.ID,
+	)
 	require.NoError(t, err)
 	require.NotEmpty(t, updatedAccount)
 	requireDecimalEqual(t, updateAccParams.Balance, updatedAccount.Balance)

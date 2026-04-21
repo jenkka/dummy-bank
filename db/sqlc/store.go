@@ -11,7 +11,9 @@ import (
 
 type Store interface {
 	Querier
-	TransferTxn(ctx context.Context, params CreateTransferParams) (TransferTxnRes, error)
+	TransferTxn(
+		ctx context.Context, params CreateTransferParams,
+	) (TransferTxnRes, error)
 }
 
 type SQLStore struct {
@@ -26,7 +28,9 @@ func NewStore(db *sql.DB) Store {
 	}
 }
 
-func (store *SQLStore) execTxn(ctx context.Context, fn func(*Queries) error) error {
+func (store *SQLStore) execTxn(
+	ctx context.Context, fn func(*Queries) error,
+) error {
 	txn, err := store.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -37,7 +41,10 @@ func (store *SQLStore) execTxn(ctx context.Context, fn func(*Queries) error) err
 	if err != nil {
 		rollbackErr := txn.Rollback()
 		if rollbackErr != nil {
-			return fmt.Errorf("Transaction error: %v, Rollback error: %v", err, rollbackErr)
+			return fmt.Errorf(
+				"Transaction error: %v, Rollback error: %v",
+				err, rollbackErr,
+			)
 		}
 
 		return err
@@ -54,7 +61,9 @@ type TransferTxnRes struct {
 	ToEntry     Entry    `json:"to_entry"`
 }
 
-func (store *SQLStore) TransferTxn(ctx context.Context, params CreateTransferParams) (TransferTxnRes, error) {
+func (store *SQLStore) TransferTxn(
+	ctx context.Context, params CreateTransferParams,
+) (TransferTxnRes, error) {
 	var txnRes TransferTxnRes
 	var err error
 

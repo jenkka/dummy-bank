@@ -54,5 +54,7 @@ func RandomEmail() string {
 }
 
 func RandomFullName() string {
-	return fmt.Sprintf("%s %s %s", RandomString(6), RandomString(6), RandomString(8))
+	return fmt.Sprintf(
+		"%s %s %s", RandomString(6), RandomString(6), RandomString(8),
+	)
 }

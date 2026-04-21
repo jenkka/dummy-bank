@@ -35,11 +35,18 @@ func (server *Server) createAccount(ctx *gin.Context) {
 	if err != nil {
 		if pqError, ok := err.(*pq.Error); ok {
 			if pqError.Code.Name() == fkViolation {
-				err = fmt.Errorf("the specified owner %s is not an existing user.", accountParams.Owner)
+				err = fmt.Errorf(
+					"the specified owner %s is not an existing user.",
+					accountParams.Owner,
+				)
 				ctx.JSON(http.StatusUnprocessableEntity, errorResponse(err))
 				return
 			} else if pqError.Code.Name() == uniqueViolation {
-				err = fmt.Errorf("an account with the currency %s already exists for the owner %s", accountParams.Currency, accountParams.Owner)
+				err = fmt.Errorf(
+					"an account with the currency %s already exists"+
+						" for the owner %s",
+					accountParams.Currency, accountParams.Owner,
+				)
 				ctx.JSON(http.StatusConflict, errorResponse(err))
 				return
 			}

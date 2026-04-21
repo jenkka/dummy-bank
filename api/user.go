@@ -54,9 +54,15 @@ func (server *Server) createUser(ctx *gin.Context) {
 			if pqError.Code.Name() == uniqueViolation {
 				switch pqError.Constraint {
 				case usersPkeyConstraint:
-					err = fmt.Errorf("a user with the username %s already exists", userParams.Username)
+					err = fmt.Errorf(
+						"a user with the username %s already exists",
+						userParams.Username,
+					)
 				case usersEmailKeyConstraint:
-					err = fmt.Errorf("a user with the email %s already exists", userParams.Email)
+					err = fmt.Errorf(
+						"a user with the email %s already exists",
+						userParams.Email,
+					)
 				}
 				ctx.JSON(http.StatusConflict, errorResponse(err))
 				return

@@ -75,7 +75,9 @@ func TestCreateTransferAPI(t *testing.T) {
 						},
 					}, nil)
 			},
-			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+			checkResponse: func(
+				t *testing.T, recorder *httptest.ResponseRecorder,
+			) {
 				require.Equal(t, http.StatusCreated, recorder.Code)
 			},
 		},
@@ -90,7 +92,9 @@ func TestCreateTransferAPI(t *testing.T) {
 				store.EXPECT().GetAccount(gomock.Any(), gomock.Any()).Times(0)
 				store.EXPECT().TransferTxn(gomock.Any(), gomock.Any()).Times(0)
 			},
-			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+			checkResponse: func(
+				t *testing.T, recorder *httptest.ResponseRecorder,
+			) {
 				require.Equal(t, http.StatusBadRequest, recorder.Code)
 			},
 		},
@@ -106,7 +110,9 @@ func TestCreateTransferAPI(t *testing.T) {
 				store.EXPECT().GetAccount(gomock.Any(), gomock.Any()).Times(0)
 				store.EXPECT().TransferTxn(gomock.Any(), gomock.Any()).Times(0)
 			},
-			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+			checkResponse: func(
+				t *testing.T, recorder *httptest.ResponseRecorder,
+			) {
 				require.Equal(t, http.StatusBadRequest, recorder.Code)
 			},
 		},
@@ -122,7 +128,9 @@ func TestCreateTransferAPI(t *testing.T) {
 				store.EXPECT().GetAccount(gomock.Any(), gomock.Any()).Times(0)
 				store.EXPECT().TransferTxn(gomock.Any(), gomock.Any()).Times(0)
 			},
-			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+			checkResponse: func(
+				t *testing.T, recorder *httptest.ResponseRecorder,
+			) {
 				require.Equal(t, http.StatusBadRequest, recorder.Code)
 			},
 		},
@@ -138,7 +146,9 @@ func TestCreateTransferAPI(t *testing.T) {
 				store.EXPECT().GetAccount(gomock.Any(), gomock.Any()).Times(0)
 				store.EXPECT().TransferTxn(gomock.Any(), gomock.Any()).Times(0)
 			},
-			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+			checkResponse: func(
+				t *testing.T, recorder *httptest.ResponseRecorder,
+			) {
 				require.Equal(t, http.StatusBadRequest, recorder.Code)
 			},
 		},
@@ -157,7 +167,9 @@ func TestCreateTransferAPI(t *testing.T) {
 					Return(db.Account{}, sql.ErrNoRows)
 				store.EXPECT().TransferTxn(gomock.Any(), gomock.Any()).Times(0)
 			},
-			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+			checkResponse: func(
+				t *testing.T, recorder *httptest.ResponseRecorder,
+			) {
 				require.Equal(t, http.StatusNotFound, recorder.Code)
 			},
 		},
@@ -180,7 +192,9 @@ func TestCreateTransferAPI(t *testing.T) {
 					Return(db.Account{}, sql.ErrNoRows)
 				store.EXPECT().TransferTxn(gomock.Any(), gomock.Any()).Times(0)
 			},
-			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+			checkResponse: func(
+				t *testing.T, recorder *httptest.ResponseRecorder,
+			) {
 				require.Equal(t, http.StatusNotFound, recorder.Code)
 			},
 		},
@@ -196,10 +210,12 @@ func TestCreateTransferAPI(t *testing.T) {
 				store.EXPECT().
 					GetAccount(gomock.Any(), gomock.Eq(fromAccount.ID)).
 					Times(1).
-					Return(fromAccount, nil) // account currency doesn't match request currency
+					Return(fromAccount, nil)
 				store.EXPECT().TransferTxn(gomock.Any(), gomock.Any()).Times(0)
 			},
-			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+			checkResponse: func(
+				t *testing.T, recorder *httptest.ResponseRecorder,
+			) {
 				require.Equal(t, http.StatusBadRequest, recorder.Code)
 			},
 		},
@@ -225,7 +241,9 @@ func TestCreateTransferAPI(t *testing.T) {
 					Return(mismatchedToAccount, nil)
 				store.EXPECT().TransferTxn(gomock.Any(), gomock.Any()).Times(0)
 			},
-			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+			checkResponse: func(
+				t *testing.T, recorder *httptest.ResponseRecorder,
+			) {
 				require.Equal(t, http.StatusBadRequest, recorder.Code)
 			},
 		},
@@ -244,7 +262,9 @@ func TestCreateTransferAPI(t *testing.T) {
 					Return(db.Account{}, sql.ErrConnDone)
 				store.EXPECT().TransferTxn(gomock.Any(), gomock.Any()).Times(0)
 			},
-			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+			checkResponse: func(
+				t *testing.T, recorder *httptest.ResponseRecorder,
+			) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
 			},
 		},
@@ -270,7 +290,9 @@ func TestCreateTransferAPI(t *testing.T) {
 					Times(1).
 					Return(db.TransferTxnRes{}, sql.ErrConnDone)
 			},
-			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+			checkResponse: func(
+				t *testing.T, recorder *httptest.ResponseRecorder,
+			) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
 			},
 		},
@@ -292,7 +314,9 @@ func TestCreateTransferAPI(t *testing.T) {
 			body, err := json.Marshal(tc.body)
 			require.NoError(t, err)
 
-			request, err := http.NewRequest(http.MethodPost, "/transfers", bytes.NewReader(body))
+			request, err := http.NewRequest(
+				http.MethodPost, "/transfers", bytes.NewReader(body),
+			)
 			require.NoError(t, err)
 
 			server.router.ServeHTTP(recorder, request)

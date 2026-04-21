@@ -43,7 +43,9 @@ func (e eqCreateUserParamsMatcher) String() string {
 	return fmt.Sprintf("matches arg %v and password %v", e.arg, e.password)
 }
 
-func eqCreateUserParams(arg db.CreateUserParams, password string) gomock.Matcher {
+func eqCreateUserParams(
+	arg db.CreateUserParams, password string,
+) gomock.Matcher {
 	return eqCreateUserParamsMatcher{arg: arg, password: password}
 }
 
@@ -87,7 +89,9 @@ func TestCreateUserAPI(t *testing.T) {
 		name          string
 		body          map[string]any
 		buildStubs    func(store *mockdb.MockStore)
-		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
+		checkResponse func(
+			t *testing.T, recorder *httptest.ResponseRecorder,
+		)
 	}{
 		{
 			name: "OK",
@@ -108,7 +112,10 @@ func TestCreateUserAPI(t *testing.T) {
 					Times(1).
 					Return(user, nil)
 			},
-			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+			checkResponse: func(
+				t *testing.T,
+				recorder *httptest.ResponseRecorder,
+			) {
 				require.Equal(t, http.StatusCreated, recorder.Code)
 				requireBodyMatchUser(t, recorder.Body, user)
 			},
@@ -127,7 +134,10 @@ func TestCreateUserAPI(t *testing.T) {
 					Times(1).
 					Return(db.User{}, sql.ErrConnDone)
 			},
-			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+			checkResponse: func(
+				t *testing.T,
+				recorder *httptest.ResponseRecorder,
+			) {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
 			},
 		},
@@ -143,9 +153,18 @@ func TestCreateUserAPI(t *testing.T) {
 				store.EXPECT().
 					CreateUser(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(db.User{}, &pq.Error{Code: "23505", Constraint: usersPkeyConstraint})
+					Return(
+						db.User{},
+						&pq.Error{
+							Code:       "23505",
+							Constraint: usersPkeyConstraint,
+						},
+					)
 			},
-			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+			checkResponse: func(
+				t *testing.T,
+				recorder *httptest.ResponseRecorder,
+			) {
 				require.Equal(t, http.StatusConflict, recorder.Code)
 			},
 		},
@@ -161,9 +180,18 @@ func TestCreateUserAPI(t *testing.T) {
 				store.EXPECT().
 					CreateUser(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(db.User{}, &pq.Error{Code: "23505", Constraint: usersEmailKeyConstraint})
+					Return(
+						db.User{},
+						&pq.Error{
+							Code:       "23505",
+							Constraint: usersEmailKeyConstraint,
+						},
+					)
 			},
-			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+			checkResponse: func(
+				t *testing.T,
+				recorder *httptest.ResponseRecorder,
+			) {
 				require.Equal(t, http.StatusConflict, recorder.Code)
 			},
 		},
@@ -180,7 +208,10 @@ func TestCreateUserAPI(t *testing.T) {
 					CreateUser(gomock.Any(), gomock.Any()).
 					Times(0)
 			},
-			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+			checkResponse: func(
+				t *testing.T,
+				recorder *httptest.ResponseRecorder,
+			) {
 				require.Equal(t, http.StatusBadRequest, recorder.Code)
 			},
 		},
@@ -197,7 +228,10 @@ func TestCreateUserAPI(t *testing.T) {
 					CreateUser(gomock.Any(), gomock.Any()).
 					Times(0)
 			},
-			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+			checkResponse: func(
+				t *testing.T,
+				recorder *httptest.ResponseRecorder,
+			) {
 				require.Equal(t, http.StatusBadRequest, recorder.Code)
 			},
 		},
@@ -214,7 +248,10 @@ func TestCreateUserAPI(t *testing.T) {
 					CreateUser(gomock.Any(), gomock.Any()).
 					Times(0)
 			},
-			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+			checkResponse: func(
+				t *testing.T,
+				recorder *httptest.ResponseRecorder,
+			) {
 				require.Equal(t, http.StatusBadRequest, recorder.Code)
 			},
 		},
@@ -230,7 +267,10 @@ func TestCreateUserAPI(t *testing.T) {
 					CreateUser(gomock.Any(), gomock.Any()).
 					Times(0)
 			},
-			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+			checkResponse: func(
+				t *testing.T,
+				recorder *httptest.ResponseRecorder,
+			) {
 				require.Equal(t, http.StatusBadRequest, recorder.Code)
 			},
 		},
@@ -252,7 +292,9 @@ func TestCreateUserAPI(t *testing.T) {
 			body, err := json.Marshal(tc.body)
 			require.NoError(t, err)
 
-			request, err := http.NewRequest(http.MethodPost, "/users", bytes.NewReader(body))
+			request, err := http.NewRequest(
+				http.MethodPost, "/users", bytes.NewReader(body),
+			)
 			require.NoError(t, err)
 
 			server.router.ServeHTTP(recorder, request)

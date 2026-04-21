@@ -55,6 +55,10 @@ func TestGetUser(t *testing.T) {
 	require.Equal(t, createdUser.HashedPwd, getUser.HashedPwd)
 	require.Equal(t, createdUser.Email, getUser.Email)
 	require.Equal(t, createdUser.FullName, getUser.FullName)
-	require.WithinDuration(t, createdUser.CreatedAt, getUser.CreatedAt, time.Second)
-	require.WithinDuration(t, createdUser.PwdUpdatedAt, getUser.PwdUpdatedAt, time.Second)
+	require.WithinDuration(
+		t, createdUser.CreatedAt, getUser.CreatedAt, time.Second,
+	)
+	require.WithinDuration(
+		t, createdUser.PwdUpdatedAt, getUser.PwdUpdatedAt, time.Second,
+	)
 }

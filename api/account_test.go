@@ -30,7 +30,9 @@ func randomAccount() db.Account {
 	}
 }
 
-func requireBodyMatchAccount(t *testing.T, body *bytes.Buffer, account db.Account) {
+func requireBodyMatchAccount(
+	t *testing.T, body *bytes.Buffer, account db.Account,
+) {
 	t.Helper()
 	data, err := io.ReadAll(body)
 	require.NoError(t, err)
@@ -257,7 +259,9 @@ func TestCreateAccountAPI(t *testing.T) {
 			body, err := json.Marshal(tc.body)
 			require.NoError(t, err)
 
-			request, err := http.NewRequest(http.MethodPost, "/accounts", bytes.NewReader(body))
+			request, err := http.NewRequest(
+				http.MethodPost, "/accounts", bytes.NewReader(body),
+			)
 			require.NoError(t, err)
 
 			server.router.ServeHTTP(recorder, request)
@@ -364,7 +368,10 @@ func TestListAccountsAPI(t *testing.T) {
 			require.NoError(t, err)
 			recorder := httptest.NewRecorder()
 
-			url := fmt.Sprintf("/accounts?page_id=%d&page_size=%d", tc.pageID, tc.pageSize)
+			url := fmt.Sprintf(
+				"/accounts?page_id=%d&page_size=%d",
+				tc.pageID, tc.pageSize,
+			)
 			request, err := http.NewRequest(http.MethodGet, url, nil)
 			require.NoError(t, err)
 

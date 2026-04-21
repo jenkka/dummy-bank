@@ -17,7 +17,10 @@ var testDB *sql.DB
 
 func requireDecimalEqual(t *testing.T, expected, actual decimal.Decimal) {
 	t.Helper()
-	require.True(t, expected.Equal(actual), "expected %s, got %s", expected, actual)
+	require.True(
+		t, expected.Equal(actual),
+		"expected %s, got %s", expected, actual,
+	)
 }
 
 func TestMain(m *testing.M) {

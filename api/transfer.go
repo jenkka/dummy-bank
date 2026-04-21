@@ -58,7 +58,9 @@ func (server *Server) createTransfer(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, transfer)
 }
 
-func (server *Server) validAccountCurrency(ctx *gin.Context, accountId int64, currency string) bool {
+func (server *Server) validAccountCurrency(
+	ctx *gin.Context, accountId int64, currency string,
+) bool {
 	account, err := server.store.GetAccount(ctx, accountId)
 	if err != nil {
 		switch err {
@@ -72,7 +74,10 @@ func (server *Server) validAccountCurrency(ctx *gin.Context, accountId int64, cu
 	}
 
 	if account.Currency != currency {
-		err = fmt.Errorf("currency mismatch for account %d: %s, vs %s", accountId, account.Currency, currency)
+		err = fmt.Errorf(
+			"currency mismatch for account %d: %s, vs %s",
+			accountId, account.Currency, currency,
+		)
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return false
 	}
