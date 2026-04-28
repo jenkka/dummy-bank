@@ -1,3 +1,5 @@
+x-db-source: &db_source "postgresql://root:secret@postgres:5432/dummy_bank?sslmode=disable"
+
 services:
   postgres:
     image: postgres:17-alpine
@@ -13,6 +15,15 @@ services:
       timeout: 5s
       retries: 5
 
+  migrate:
+    image: migrate/migrate:v4.19.1
+    volumes:
+      - ./db/migration:/migrations
+    command: ["-path=/migrations", "-database", *db_source, "up"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   server:
     build:
       context: .
@@ -20,9 +31,9 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - DB_SOURCE=postgresql://root:secret@postgres:5432/dummy_bank?sslmode=disable
-      - GIN_MODE=release
+      DB_SOURCE: *db_source
+      GIN_MODE: release
     depends_on:
-      postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     restart: always
