@@ -40,6 +40,12 @@ status:
 logs:
 	kubectl logs -l app=dummy-bank-api --tail=50 -f
 
+check-aws:
+	@aws ec2 describe-instances --region us-east-2 \
+		--query 'Reservations[].Instances[] | [?State.Name==`running`].[InstanceId,InstanceType,LaunchTime]' \
+		--output table
+	@aws eks list-clusters --region us-east-2 --output table
+
 run-postgres:
 	docker network inspect bank-network >/dev/null 2>&1 || docker network create bank-network
 	docker run --name dummy-bank-postgres --network bank-network -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -d postgres:17-alpine
