@@ -8,7 +8,7 @@ Built as a deep dive into production Go backend patterns. The architectural skel
 
 ## What it does
 
-- **Users** — Sign up, log in, and receive a JWT access token.
+- **Users** — Sign up, log in, and receive a short-lived JWT access token plus a long-lived refresh token. Each login creates a session row in the database so individual sessions can be revoked without rotating the signing key.
 - **Accounts** — Create multiple accounts per user, each in its own currency. A unique `(owner, currency)` constraint prevents a user from accidentally creating two accounts in the same currency.
 - **Transfers** — Move money atomically between two accounts in the same currency, with both sides updated under a single database transaction. Each transfer produces a paired ledger entry per account, giving every account an append-only history.
 - **Authorization** — Authenticated routes verify the bearer token; transfer requests additionally check that the sender owns the source account before executing.
@@ -34,7 +34,8 @@ Built as a deep dive into production Go backend patterns. The architectural skel
 ```
 Client ──HTTPS──> Gin router
                      │
-                     ├── /users, /users/login          (public)
+                     ├── /users, /users/login                    (public)
+                     ├── /tokens/renew_access                    (public — refresh-token gated)
                      │
                      └── authMiddleware (Bearer JWT)
                             │
@@ -52,12 +53,13 @@ Client ──HTTPS──> Gin router
 
 ## Database schema
 
-Four tables: `users`, `accounts`, `transfers`, `entries`.
+Five tables: `users`, `accounts`, `transfers`, `entries`, `sessions`.
 
 - `users` — primary key on `username`, unique index on `email`, with `pwd_updated_at` for password rotation tracking.
 - `accounts` — owned by a user via `owner → users.username` foreign key, with a unique `(owner, currency)` constraint so each user has at most one account per currency.
 - `transfers` — records the intent of moving an amount between two accounts.
 - `entries` — records a balance delta on a single account; one negative entry and one positive entry are produced per transfer, giving every account a queryable ledger.
+- `sessions` — one row per active login, keyed by the refresh token's UUID (`jti` claim). Stores the full refresh-token string, the issuing user agent and client IP for audit, an `is_blocked` flag for revocation, and the session's `expires_at`. The refresh-token renewal handler validates the JWT, looks up its session, and rejects any token whose session is missing, blocked, expired, or whose stored fields disagree with the presented token.
 
 Schema is managed via `golang-migrate` (versioned up/down files), and type-safe Go bindings are generated from raw SQL via `sqlc`. A `decimal` column override in `sqlc.yaml` maps Postgres `numeric` to `shopspring/decimal.Decimal` in Go.
 
@@ -133,12 +135,11 @@ make teardown    # destroy → issuer-uninstall → cert-manager-uninstall → i
 
 ## Status and what's next
 
-Implemented: users, accounts, transfers, JWT auth, authorization middleware, transactional balance updates with deadlock-safe ordering, unit-test coverage of the API and store layers with gomock, Dockerized local dev, CI through the test suite, and a fully scripted EKS deployment with nginx-ingress and automatic Let's Encrypt TLS.
+Implemented: users, accounts, transfers, JWT auth with short-lived access tokens and long-lived refresh tokens backed by a revocable `sessions` table, authorization middleware, transactional balance updates with deadlock-safe ordering, unit-test coverage of the API and store layers with gomock, Dockerized local dev, CI through the test suite, and a fully scripted EKS deployment with nginx-ingress and automatic Let's Encrypt TLS.
 
 Not yet implemented (planned, course covers some of these):
 - gRPC endpoints alongside REST
 - PASETO as an alternative token format behind the existing `Maker` interface
-- Refresh tokens with session storage
 - Background workers for async tasks (e.g. welcome emails)
 - Structured logging and metrics
 - Add `app.env` to `.dockerignore` and source config from a Kubernetes Secret instead of baking it into the image
