@@ -7,6 +7,7 @@
 package dummybankv1
 
 import (
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -24,11 +25,11 @@ var File_dummybank_v1_service_dummy_bank_proto protoreflect.FileDescriptor
 
 const file_dummybank_v1_service_dummy_bank_proto_rawDesc = "" +
 	"\n" +
-	"%dummybank/v1/service_dummy_bank.proto\x12\fdummybank.v1\x1a\"dummybank/v1/rpc_create_user.proto\x1a!dummybank/v1/rpc_login_user.proto2\xb5\x01\n" +
-	"\x10DummyBankService\x12Q\n" +
+	"%dummybank/v1/service_dummy_bank.proto\x12\fdummybank.v1\x1a\"dummybank/v1/rpc_create_user.proto\x1a!dummybank/v1/rpc_login_user.proto\x1a\x1cgoogle/api/annotations.proto2\xe3\x01\n" +
+	"\x10DummyBankService\x12e\n" +
 	"\n" +
-	"CreateUser\x12\x1f.dummybank.v1.CreateUserRequest\x1a .dummybank.v1.CreateUserResponse\"\x00\x12N\n" +
-	"\tLoginUser\x12\x1e.dummybank.v1.LoginUserRequest\x1a\x1f.dummybank.v1.LoginUserResponse\"\x00B:Z8github.com/jenkka/dummy-bank/pb/dummybank/v1;dummybankv1b\x06proto3"
+	"CreateUser\x12\x1f.dummybank.v1.CreateUserRequest\x1a .dummybank.v1.CreateUserResponse\"\x14\x82\xd3\xe4\x93\x02\x0e:\x01*\"\t/v1/users\x12h\n" +
+	"\tLoginUser\x12\x1e.dummybank.v1.LoginUserRequest\x1a\x1f.dummybank.v1.LoginUserResponse\"\x1a\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/v1/users/loginB:Z8github.com/jenkka/dummy-bank/pb/dummybank/v1;dummybankv1b\x06proto3"
 
 var file_dummybank_v1_service_dummy_bank_proto_goTypes = []any{
 	(*CreateUserRequest)(nil),  // 0: dummybank.v1.CreateUserRequest

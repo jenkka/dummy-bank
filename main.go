@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"log"
 	"net"
+	"net/http"
 
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/jenkka/dummy-bank/api"
 	db "github.com/jenkka/dummy-bank/db/sqlc"
 	"github.com/jenkka/dummy-bank/gapi"
@@ -13,6 +16,7 @@ import (
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 func main() {
@@ -29,6 +33,7 @@ func main() {
 
 	store := db.NewStore(conn)
 
+	go runGatewayServer(config, store)
 	runGRPCServer(config, store)
 }
 
@@ -51,6 +56,46 @@ func runGRPCServer(config util.Config, store db.Store) {
 	err = grpcServer.Serve(listener)
 	if err != nil {
 		log.Fatal("Failed to start gRPC server:", err)
+	}
+}
+
+func runGatewayServer(config util.Config, store db.Store) {
+	server, err := gapi.NewServer(store, config)
+	if err != nil {
+		log.Fatal("Failed to create HTTP gateway server:", err)
+	}
+
+	jsonOption := runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
+		MarshalOptions: protojson.MarshalOptions{
+			UseProtoNames: true,
+		},
+		UnmarshalOptions: protojson.UnmarshalOptions{
+			DiscardUnknown: true,
+		},
+	})
+
+	grpcMux := runtime.NewServeMux(jsonOption)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err = pb.RegisterDummyBankServiceHandlerServer(ctx, grpcMux, server)
+	if err != nil {
+		log.Fatal("Failed to register handler server:", err)
+	}
+
+	mux := http.NewServeMux()
+	mux.Handle("/", grpcMux)
+
+	listener, err := net.Listen("tcp", config.HTTPServerAddress)
+	if err != nil {
+		log.Fatal("Failed to create listener:", err)
+	}
+
+	log.Printf("Starting HTTP gateway server on %s", config.GRPCServerAddress)
+	err = http.Serve(listener, mux)
+	if err != nil {
+		log.Fatal("Failed to start HTTP gateway server:", err)
 	}
 }
 

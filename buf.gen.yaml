@@ -1,10 +1,13 @@
-  version: v2
-  plugins:
-    - remote: buf.build/protocolbuffers/go
-      out: pb
-      opt: paths=source_relative
-    - remote: buf.build/grpc/go
-      out: pb
-      opt:
-        - paths=source_relative
-        - require_unimplemented_servers=false
+version: v2
+plugins:
+  - remote: buf.build/protocolbuffers/go
+    out: pb
+    opt: paths=source_relative
+  - remote: buf.build/grpc/go
+    out: pb
+    opt:
+      - paths=source_relative
+      - require_unimplemented_servers=false
+  - remote: buf.build/grpc-ecosystem/gateway
+    out: pb
+    opt: paths=source_relative

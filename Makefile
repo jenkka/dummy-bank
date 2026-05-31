@@ -24,9 +24,13 @@ help: ## Show this help
 		/^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) }' $(MAKEFILE_LIST)
 
 ##@ gRPC
-proto:
+LOCAL_BIN := $(CURDIR)/bin
+tools:
+	GOBIN=$(LOCAL_BIN) go install tool
+
+proto: tools
 	rm -rf pb/*
-	buf generate
+	PATH="$(LOCAL_BIN):$$PATH" buf generate
 
 evans:
 	evans -r repl --host localhost --port 9090
