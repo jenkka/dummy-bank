@@ -69,12 +69,14 @@ func (server *Server) LoginUser(
 		return nil, status.Errorf(codes.Internal, "failed to parse refresh payload ID: %s", err)
 	}
 
+	metadata := server.ExtractMetadata(ctx)
+
 	session, err := server.store.CreateSession(ctx, db.CreateSessionParams{
 		ID:           parsedUUID,
 		Username:     user.Username,
 		RefreshToken: refreshToken,
-		UserAgent:    "TODO",
-		ClientIp:     "TODO",
+		UserAgent:    metadata.UserAgent,
+		ClientIp:     metadata.ClientIp,
 		ExpiresAt:    refreshPayload.ExpiresAt.Time,
 		IsBlocked:    false,
 	})
