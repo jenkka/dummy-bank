@@ -9,6 +9,7 @@ import (
 	pb "github.com/jenkka/dummy-bank/pb/dummybank/v1"
 	"github.com/jenkka/dummy-bank/util"
 	"github.com/lib/pq"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -17,6 +18,11 @@ func (server *Server) CreateUser(
 	ctx context.Context,
 	req *pb.CreateUserRequest,
 ) (*pb.CreateUserResponse, error) {
+	violations := validateCreateUserRequest(req)
+	if violations != nil {
+		return nil, invalidArgumentError(violations)
+	}
+
 	hashedPassword, err := util.HashPassword(req.GetPassword())
 	if err != nil {
 		return nil, status.Errorf(
@@ -57,4 +63,24 @@ func (server *Server) CreateUser(
 	}
 
 	return res, nil
+}
+
+func validateCreateUserRequest(req *pb.CreateUserRequest) (violations []*errdetails.BadRequest_FieldViolation) {
+	if err := util.ValidateUsername(req.GetUsername()); err != nil {
+		violations = append(violations, fieldViolation("username", err))
+	}
+
+	if err := util.ValidateFullName(req.GetFullName()); err != nil {
+		violations = append(violations, fieldViolation("full_name", err))
+	}
+
+	if err := util.ValidatePassword(req.GetPassword()); err != nil {
+		violations = append(violations, fieldViolation("password", err))
+	}
+
+	if err := util.ValidateEmail(req.GetEmail()); err != nil {
+		violations = append(violations, fieldViolation("email", err))
+	}
+
+	return violations
 }
